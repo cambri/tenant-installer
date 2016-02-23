@@ -64,14 +64,13 @@ bash_user=${USER}
 
 start_directory=${PWD}
 
-database_username="hyn"
-database_name="hyn_multi_tenancy"
-database_password=""
+database_username="{{ database_username|default('hyn') }}"
+database_name="{{ database_name|default('hyn_multi_tenancy') }}"
+database_password="{{ database_password|default('') }}"
 
-app_key=""
+app_key="{{ app_key|default('') }}"
 
-# this might become invalidated because it's a token generated per account
-github_token="b407c2429ec1a63d7a338bc7706cb408cb593f37"
+github_token="{{ token|default('b407c2429ec1a63d7a338bc7706cb408cb593f37') }}"
 
 #########################################################
 #
@@ -81,8 +80,11 @@ github_token="b407c2429ec1a63d7a338bc7706cb408cb593f37"
 
 sudo apt-get update -y
 
-# Webserver, PHP, Redis, Mariadb, OpenSSL, CURL
-sudo apt-get install -y -f apache2 libapache2-mod-fcgid libapache2-mod-php5 php5 php5-mysql php5-mcrypt php5-json php5-fpm php5-cli redis-server mariadb-server openssl curl pwgen supervisor beanstalkd
+sudo apt-get install -y -f \
+    apache2 libapache2-mod-fcgid libapache2-mod-php5 \
+    php5 php5-mysql php5-mcrypt php5-json php5-fpm php5-cli \
+    redis-server mariadb-server openssl curl pwgen \
+    supervisor beanstalkd
 
 # apache
 a2enmod rewrite
@@ -102,7 +104,10 @@ composer config -g github-oauth.github.com ${github_token}
 #########################################################
 
 database_password=`pwgen -cnsB 15 1`
-app_key=`pwgen -cnsB 32 1`
+
+if[ -z "${app_key}" ]; then
+    app_key=`pwgen -cnsB 32 1`
+fi;
 
 sudo mysql -e "create database ${database_name};"
 sudo mysql -e "create user ${database_username}@localhost identified by '${database_password}';"
@@ -119,13 +124,15 @@ cd /var/www
 sudo rm -rf html
 
 composer create-project laravel/laravel . --no-dev --prefer-dist 5.1
-composer require predis/predis --update-no-dev --prefer-dist
-composer require pda/pheanstalk --update-no-dev --prefer-dist
-composer require hyn/multi-tenant --update-no-dev --prefer-dist
+composer require predis/predis --update-no-dev --prefer-dist --no-update
+composer require pda/pheanstalk --update-no-dev --prefer-dist --no-update
+composer require "hyn/multi-tenant{% if testing %} dev-master{% endif %}" --update-no-dev --prefer-dist --no-update
 
 {% if interface %}
-composer require hyn/management-interface --update-no-dev --prefer-dist
+composer require hyn/management-interface --update-no-dev --prefer-dist --no-update
 {% endif %}
+
+composer update --no-dev --prefer-dist
 
 mkdir log
 ln -s public ./html
@@ -148,8 +155,6 @@ ln -s public ./html
     echo "QUEUE_DRIVER=beanstalkd"
 ) > .env
 
-#         App\Providers\RouteServiceProvider::class,
-
 #########################################################
 #
 #   Register multi tenancy
@@ -166,14 +171,7 @@ php -r "\$config = include 'vendor/hyn/multi-tenant/config/multi-tenant.php'; \$
 #
 #########################################################
 
-writeQuestion "Specify the first (admin) tenant (company) name:"
-read tenant
-writeQuestion "Specify the email address of this tenant:"
-read email
-writeQuestion "Specify the first hostname, it must resolve to this server:"
-read hostname
-
-php artisan multi-tenant:setup --tenant="${tenant}" --email="${email}" --hostname="${hostname}" --webserver=apache
+php artisan multi-tenant:setup --webserver=apache
 
 #########################################################
 #
