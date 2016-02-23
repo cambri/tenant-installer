@@ -122,6 +122,9 @@ composer create-project laravel/laravel . --no-dev --prefer-dist 5.1
 composer require predis/predis --update-no-dev --prefer-dist
 composer require pda/pheanstalk --update-no-dev --prefer-dist
 composer require hyn/multi-tenant --update-no-dev --prefer-dist
+@if(isset($interface))
+    composer require hyn/management-interface --update-no-dev --prefer-dist
+@endif
 
 mkdir log
 ln -s public ./html

@@ -1,7 +1,6 @@
 <?php
 
-Route::get('/', function()
-{
+Route::get('/', function () {
     return Redirect::away('https://hyn.readme.io/docs/installation#2-using-the-automatic-installer');
 });
 
