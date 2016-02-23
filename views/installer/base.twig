@@ -2,7 +2,7 @@
 
 #######################################################################
 #
-#   Formatting funkiness favorable fathomness
+#   Formatting and helper functions
 #
 #######################################################################
 
@@ -122,8 +122,9 @@ composer create-project laravel/laravel . --no-dev --prefer-dist 5.1
 composer require predis/predis --update-no-dev --prefer-dist
 composer require pda/pheanstalk --update-no-dev --prefer-dist
 composer require hyn/multi-tenant --update-no-dev --prefer-dist
+
 {% if interface %}
-    composer require hyn/management-interface --update-no-dev --prefer-dist
+composer require hyn/management-interface --update-no-dev --prefer-dist
 {% endif %}
 
 mkdir log
@@ -190,6 +191,7 @@ php artisan multi-tenant:setup --tenant="${tenant}" --email="${email}" --hostnam
     echo "redirect_stderr=true"
     echo "stdout_logfile=${PWD}/log/worker.log"
 ) > supervisord.conf
+
 sudo mv supervisord.conf /etc/supervisor/conf.d/laravel.conf
 sudo supervisorctl update
 
