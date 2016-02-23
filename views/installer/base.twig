@@ -82,8 +82,9 @@ sudo apt-get update -y
 
 sudo apt-get install -y -f \
     apache2 libapache2-mod-fcgid libapache2-mod-php5 \
-    php5 php5-mysql php5-mcrypt php5-json php5-fpm php5-cli \
-    redis-server mariadb-server openssl curl pwgen \
+    openssl curl pwgen \
+    php5 php5-mysql php5-mcrypt php5-json php5-fpm php5-cli php5-curl \
+    redis-server mariadb-server \
     supervisor beanstalkd
 
 # apache
@@ -106,7 +107,7 @@ composer global require hirak/prestissimo
 
 database_password=`pwgen -cnsB 15 1`
 
-if[ -z "${app_key}" ]; then
+if [ -z "${app_key}" ]; then
     app_key=`pwgen -cnsB 32 1`
 fi;
 
@@ -124,7 +125,9 @@ cd /var/www
 
 sudo rm -rf html
 
-composer create-project laravel/laravel . --no-dev --prefer-dist 5.1
+composer create-project laravel/laravel . \
+    --no-dev --prefer-dist 5.1.*{% if testing or stability %} --stability {{ stability|default('dev') }}{% endif %}
+
 composer require predis/predis --update-no-dev --prefer-dist --no-update
 composer require pda/pheanstalk --update-no-dev --prefer-dist --no-update
 composer require "hyn/multi-tenant{% if testing %} dev-master{% endif %}" --update-no-dev --prefer-dist --no-update
